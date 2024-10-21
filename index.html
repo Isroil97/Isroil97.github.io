@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Barcode Scanner</title>
+    <title>QR Code Scanner WebTech</title>
     <style>
       #interactive {
         width: 100%;
@@ -12,53 +12,19 @@
         display: none; /* Kamerani boshlashdan oldin yashiramiz */
       }
     </style>
+    <!-- html5-qrcode kutubxonasini qo'shamiz -->
+    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
   </head>
   <body>
-    <h1>Barcode Scanner</h1>
+    <h1>QR Code Scanner</h1>
 
     <button id="startScanner">Kamerani yoqish</button>
     <div id="interactive" class="viewport"></div>
-    <p>Detected Barcode: <span id="result"></span></p>
+    <p>Detected QR Code: <span id="result"></span></p>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
     <script>
       const startScannerButton = document.getElementById("startScanner");
       const interactive = document.getElementById("interactive");
-
-      // Quagga boshlanishini o'rab olamiz
-      function startScanner() {
-        Quagga.init(
-          {
-            inputStream: {
-              name: "Live",
-              type: "LiveStream",
-              target: document.querySelector("#interactive"), // Video stream joylashadi
-            },
-            decoder: {
-              readers: [
-                "code_128_reader",
-                "ean_reader",
-                "ean_8_reader",
-                "code_39_reader",
-              ],
-            },
-          },
-          function (err) {
-            if (err) {
-              console.error(err);
-              return;
-            }
-            console.log("Initialization finished. Ready to start");
-            Quagga.start();
-          }
-        );
-
-        // Bar-kodni aniqlash
-        Quagga.onDetected(function (data) {
-          document.getElementById("result").innerText = data.codeResult.code;
-          Quagga.stop(); // Bar-kod aniqlanganidan keyin skaner to'xtaydi
-        });
-      }
 
       // Kamerani yoqish tugmachasini bosganda
       startScannerButton.addEventListener("click", () => {
@@ -68,7 +34,7 @@
           .then(function (stream) {
             // Ruxsat berilganda kamerani ochamiz
             interactive.style.display = "block"; // Kamerani ko'rsatamiz
-            startScanner();
+            startQrScanner();
           })
           .catch(function (err) {
             console.error("Kameradan foydalanib bo'lmadi: ", err);
@@ -93,6 +59,32 @@
             }
           });
       });
+
+      function startQrScanner() {
+        const html5QrCode = new Html5Qrcode("interactive");
+
+        html5QrCode
+          .start(
+            { facingMode: "environment" }, // Orqa kamerani ishga tushiramiz
+            {
+              fps: 10, // Sekundiga necha marta skan qilishni sozlash
+              qrbox: { width: 250, height: 250 } // Skaner maydonini sozlash
+            },
+            qrCodeMessage => {
+              // QR kodni topganda
+              document.getElementById("result").innerText = qrCodeMessage;
+              alert("QR kod topildi: " + qrCodeMessage);
+              html5QrCode.stop(); // QR kod topilganidan keyin to'xtatamiz
+            },
+            errorMessage => {
+              // Har bir skaner yuritilganida xato yuz bersa chiqadi
+              console.log("QR kodni topib bo'lmadi: ", errorMessage);
+            }
+          )
+          .catch(err => {
+            console.error("QR kodni boshlashda xatolik yuz berdi: ", err);
+          });
+      }
     </script>
   </body>
 </html>
