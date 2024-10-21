@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Barcode Scanner</title>
+    <style>
+      #interactive {
+        width: 100%;
+        height: 400px;
+        border: 1px solid black;
+        display: none; /* Kamerani boshlashdan oldin yashiramiz */
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Barcode Scanner</h1>
+
+    <button id="startScanner">Kamerani yoqish</button>
+    <div id="interactive" class="viewport"></div>
+    <p>Detected Barcode: <span id="result"></span></p>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+    <script>
+      const startScannerButton = document.getElementById("startScanner");
+      const interactive = document.getElementById("interactive");
+
+      // Quagga boshlanishini o'rab olamiz
+      function startScanner() {
+        Quagga.init(
+          {
+            inputStream: {
+              name: "Live",
+              type: "LiveStream",
+              target: document.querySelector("#interactive"), // Video stream joylashadi
+            },
+            decoder: {
+              readers: [
+                "code_128_reader",
+                "ean_reader",
+                "ean_8_reader",
+                "code_39_reader",
+              ],
+            },
+          },
+          function (err) {
+            if (err) {
+              console.error(err);
+              return;
+            }
+            console.log("Initialization finished. Ready to start");
+            Quagga.start();
+          }
+        );
+
+        // Bar-kodni aniqlash
+        Quagga.onDetected(function (data) {
+          document.getElementById("result").innerText = data.codeResult.code;
+          Quagga.stop(); // Bar-kod aniqlanganidan keyin skaner to'xtaydi
+        });
+      }
+
+      // Kamerani yoqish tugmachasini bosganda
+      startScannerButton.addEventListener("click", () => {
+        // Kameradan foydalanish uchun ruxsat so'raymiz
+        navigator.mediaDevices
+          .getUserMedia({ video: true })
+          .then(function (stream) {
+            // Ruxsat berilganda kamerani ochamiz
+            interactive.style.display = "block"; // Kamerani ko'rsatamiz
+            startScanner();
+          })
+          .catch(function (err) {
+            console.error("Kameradan foydalanib bo'lmadi: ", err);
+
+            // Xatolik sababini aniqlaymiz
+            if (
+              err.name === "NotFoundError" ||
+              err.name === "DevicesNotFoundError"
+            ) {
+              alert(
+                "Kamera topilmadi. Qurilmangizda kamera mavjud emas yoki ishlamayapti."
+              );
+            } else if (
+              err.name === "NotAllowedError" ||
+              err.name === "PermissionDeniedError"
+            ) {
+              alert(
+                "Kameraga ruxsat berilmadi. Iltimos, kameraga ruxsat bering."
+              );
+            } else {
+              alert("Kameraga ulanib bo'lmadi. Noma'lum xato yuz berdi.");
+            }
+          });
+      });
+    </script>
+  </body>
+</html>
